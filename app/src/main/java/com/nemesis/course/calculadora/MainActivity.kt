@@ -2,6 +2,7 @@ package com.nemesis.course.calculadora
 
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
@@ -10,9 +11,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
     private lateinit var txtDisplay: TextView
 
+    private val processor = Processor()
+
     private var currentNumber = ""
-    private var accumulator = 0.0
-    private var operation:String = ""
     private var isTypingANumber = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,8 +21,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         setContentView(R.layout.activity_main)
 
         txtDisplay = findViewById(R.id.display)
-
-        val btnClear:Button = findViewById(R.id.key_clear)
 
         // Infiere el tipo de de valor de la variable
         val btnKey0 = findViewById<Button>(R.id.key_0)
@@ -85,48 +84,57 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
         }
 
+        val btnClear:Button = findViewById(R.id.key_clear)
+        btnClear.setOnClickListener {
+
+            clear()
+        }
 
     }
 
     override fun onClick(v: View?) {
         if( v is Button){
 
-            isTypingANumber = true
+            if(isTypingANumber){
+                currentNumber += v.text.toString()
+            }else{
+                isTypingANumber = true
+                currentNumber = v.text.toString()
+            }
 
-            currentNumber += v.text
             txtDisplay.text = currentNumber
+
         }
     }
 
     private fun performOperation(operation:String){
-        if(isTypingANumber){
-            val number = currentNumber.toDouble()
 
-            if(operation == "="){
+        isTypingANumber = false
 
-                val result = when(this.operation){
+        if(processor.hasFirstOperand()){
 
-                    "+" -> accumulator + number
+            val operand = txtDisplay.text.toString().toDouble()
+            processor.perfomOperation(operand)
+            processor.operator = operation
 
-                    "-" -> accumulator - number
+        }else{
 
-                    "*" -> accumulator * number
-
-                    "/" -> accumulator / number
-
-                    else -> 0.0
-                }
-
-                txtDisplay.text = result.toString()
-
-            }else{
-                accumulator = number
-                currentNumber = ""
-                this.operation = operation
-            }
-
+            val operand = txtDisplay.text.toString().toDouble()
+            processor.setOperand(operand)
+            processor.operator = operation
 
         }
+
+        txtDisplay.text = processor.getResult().toString()
+
+    }
+
+    private fun clear(){
+        txtDisplay.text = "0"
+        processor.clear()
+
+        Log.w("clear()", "Se ejecutó!")
+
     }
 
 }
